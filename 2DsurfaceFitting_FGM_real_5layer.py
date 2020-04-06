@@ -21,7 +21,10 @@ print(args.fileName)
 
 
 # 训练次数
-TRAIN_TIMES = 3000
+TRAIN_TIMES = 30000
+PRIDICTION_TOLERANCE = 0.01#1%TOLERANCE of the real data 
+# 学习率，越大学的越快，但也容易造成不稳定，准确率上下波动的情况
+LEARNING_RATE = 0.001
 # 输入输出的数据维度，这里都是1维
 INPUT_FEATURE_DIM = 2
 OUTPUT_FEATURE_DIM = 1
@@ -31,8 +34,7 @@ OUTPUT_FEATURE_DIM = 1
 # HIDDEN_3_DIM = 8
 # HIDDEN_4_DIM = 4
 # HIDDEN_5_DIM = 1
-# 学习率，越大学的越快，但也容易造成不稳定，准确率上下波动的情况
-LEARNING_RATE = 1
+
 
 # The number of Z and PV for creating the input array
 nZ=1001
@@ -40,7 +42,8 @@ nPV=501
 
 # ============================ step 1/6 导入数据 ============================
 fieldName = args.fileName
-animationPATH = '02.annGraph/animations/'+fieldName+'/LEARNING_RATE'+str(LEARNING_RATE)
+#animationPATH = '02.annGraph/animations/'+fieldName+'/LEARNING_RATE'+str(LEARNING_RATE)
+animationPATH = '02.annGraph/animations/'+fieldName
 graphsPATH = '02.annGraph/graphs/'+fieldName
 # Create directory
 if not os.path.exists(animationPATH):
@@ -99,6 +102,9 @@ y_data = y_data_real#*(1 + 0.01*torch.randn(y_data.size()))
 
 # 学习率，越大学的越快，但也容易造成不稳定，准确率上下波动的情况
 #LEARNING_RATE = 0.1*(y_data.max()-y_data.min())
+# residual = (0.01*y_data)
+
+#math.sqrt(sum([x ** 2 for x in records]) / len(records))
 # ============================ step 2/6 选择模型 ============================
 
 # 建立网络
@@ -113,14 +119,23 @@ print(net)
 
 
 # ============================ step 3/6 选择优化器   =========================
-# 训练网络
-# 这里也可以使用其它的优化方法
-#optimizer = torch.optim.Adam(net.parameters(), lr=LEARNING_RATE)
-optimizer = torch.optim.Adagrad(net.parameters(), lr=LEARNING_RATE, initial_accumulator_value=0)
+
+optimizer = torch.optim.Adam(net.parameters(), lr=LEARNING_RATE)
+#optimizer = torch.optim.AdamW(net.parameters(), lr=LEARNING_RATE, amsgrad=True)
+# sum of the initial value
+#y_data_sum = torch.sum(y_data)
+#optimizer = torch.optim.Adagrad(net.parameters(), lr=LEARNING_RATE, initial_accumulator_value=y_data_sum)
 
 # Learning rate adapting
 #scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=500, gamma=0.5)
-scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.5, threshold=1e-03, patience=10)
+
+
+#scheduler.get_lr()[0]
+
+scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.5, patience=50)
+
+#optimizer = torch.optim.SGD(net.parameters(), lr=0.002, momentum=0.9)
+#scheduler = torch.optim.lr_scheduler.CyclicLR(optimizer, base_lr=0.01, max_lr=0.1)
 
 #torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=10, verbose=False, threshold=0.0001, threshold_mode='rel', cooldown=0, min_lr=0, eps=1e-08)
 
@@ -144,6 +159,10 @@ scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.5, th
 # Mean Square Error (MSE), MSELoss(), L2 loss
 # Mean Absolute Error (MAE), MAELoss(), L1 Loss
 loss_func = torch.nn.MSELoss()
+
+LOSS_TOLERANCE = loss_func(0*y_data, PRIDICTION_TOLERANCE*y_data)
+
+print("LOSS_TOLERANCE : ",'%.4e'%LOSS_TOLERANCE)
 # 输入数据进行预测
 #firstLoss = loss_func(net(x_data), y_data).data.numpy()
 #firstLoss = np.linalg.norm(firstLoss)
@@ -159,18 +178,20 @@ for i in range(TRAIN_TIMES):
     # 计算预测值与真值误差，注意参数顺序问题
     # 第一个参数为预测值，第二个为真值
     loss = loss_func(prediction, y_data)#*100/firstLoss
+    # Change the learning rate
+    #scheduler.step()
+    scheduler.step(loss)
     # 开始优化步骤
     # 每次开始优化前将梯度置为0
     optimizer.zero_grad()
     # 误差反向传播
     loss.backward()
     optimizer.step()
-    # Change the learning rate
-    #scheduler.step()
-    scheduler.step(loss)
     # 按照最小loss优化参数
     # 可视化训练结果
-    print("Iteration : ",'%04d'%i, "\tLearningRate : {:.4e}\tLoss: {:.5e}".format( optimizer.param_groups[0]['lr'], loss.data.numpy() ))  
+    print("Iteration : ",'%05d'%i, "\tLearningRate : {:.4e}\tLoss: {:.5e}".format( optimizer.param_groups[0]['lr'], loss.data.numpy() ))  
+    if loss < LOSS_TOLERANCE:
+        break    # Lower than tollance break here
     if i % 50 == 0:
         # 清空上一次显示结果
         #ax.cla()
@@ -186,7 +207,7 @@ for i in range(TRAIN_TIMES):
         #ax.plot_trisurf(x_data.numpy()[:,0], x_data.numpy()[:,1], prediction.data.numpy()[:,0], color = 'red',linewidth=2)
         #ax.text('Time=%d Loss=%.4f' % (i, loss.data.numpy()), fontdict={'size': 15, 'color': 'red'})
         #plt.pause(0.1)
-        plt.savefig(animationPATH+'/'+str('%04d'%i)+'.png', dpi=96)
+        plt.savefig(animationPATH+'/'+str('%05d'%i)+'.png', dpi=96)
         # 清空上一次显示结果
         pridSurf.remove()
 
