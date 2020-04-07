@@ -146,3 +146,37 @@ class Batch_Net_5_2(nn.Module):
         x = self.layer5(x)
         x = self.layer6(x)
         return x
+
+# class Batch_Net_5_3(nn.Module):
+    # """
+    # 在上面的Activation_Net的基础上，增加了一个加快收敛速度的方法——批标准化
+    # """
+    # def __init__(self, in_dim, n_hidden_1, n_hidden_2, n_hidden_3, n_hidden_4, n_hidden_5, out_dim, bias=False):
+        # super(Batch_Net_5_3, self).__init__()
+        # self.layer1 = nn.Linear(in_dim, n_hidden_1, bias=bias)
+        # #nn.init.kaiming_normal_(self.layer1.weight)
+        # self.relu1 = nn.ReLU(inplace=True)
+        # self.layer2 = nn.Linear(in_dim, n_hidden_2, bias=bias)
+        # #nn.init.kaiming_normal_(self.layer2.weight)
+        # self.relu2 = nn.ReLU(inplace=True)
+        # self.layer3 = nn.Linear(n_hidden_2, n_hidden_3, bias=bias)
+        # #nn.init.kaiming_normal_(self.layer3.weight)
+        # self.relu3 = nn.ReLU(inplace=True)
+        # self.layer4 = nn.Linear(n_hidden_3, n_hidden_4, bias=bias)
+        # #nn.init.kaiming_normal_(self.layer4.weight)
+        # self.relu4 = nn.ReLU(inplace=True)
+        # self.layer5 = nn.Linear(n_hidden_4, n_hidden_5, bias=bias)
+        # #nn.init.kaiming_normal_(self.layer5.weight)
+        # self.relu5 = nn.ReLU(inplace=True)        
+        # self.layer6 = nn.Linear(n_hidden_5, out_dim, bias=bias)
+        # #nn.init.kaiming_normal_(self.layer6.weight)
+        # self.relu6 = nn.ReLU(inplace=True)
+ 
+    # def forward(self, x):
+        # x = self.layer1(x)
+        # x = self.layer2(x)
+        # x = self.layer3(x)
+        # x = self.layer4(x)
+        # x = self.layer5(x)
+        # x = self.layer6(x)
+        # return x
