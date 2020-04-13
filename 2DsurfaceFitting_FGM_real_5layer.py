@@ -16,7 +16,7 @@ import netTest
 # 训练次数
 TRAIN_TIMES = 30000
 PATIENCE = 100
-PRIDICTION_TOLERANCE = 0.05#1%TOLERANCE of the real data 
+PRIDICTION_TOLERANCE = 0.01#1%TOLERANCE of the real data 
 
 # 输入输出的数据维度，这里都是1维
 INPUT_FEATURE_DIM = 2
@@ -52,7 +52,7 @@ print(args.learningRate)
 LEARNING_RATE = args.learningRate
 
 fieldName = args.fieldName
-dataFile = '01.orgData/'+fieldName+'.txt'
+dataFile = '01.orgData/Y_'+fieldName+'.txt'
 animationPATH = '02.annGraph/animations/'+fieldName#+'/LEARNING_RATE'+str(args.learningRate)
 #animationPATH = '02.annGraph/animations/'+fieldName
 graphsPATH = '02.annGraph/graphs/'+fieldName
@@ -107,7 +107,11 @@ y_data = torch.from_numpy(outputs_np).float()
 
 # randn函数用于生成服从正态分布的随机数
 y_data_real = y_data
-y_data = y_data_real*5000#*(1 + PRIDICTION_TOLERANCE*torch.randn(y_data.size()))
+Min = y_data_real.min()
+Max = y_data_real.max()
+y_data = (y_data_real-Min)/(Max-Min)#*(1 + PRIDICTION_TOLERANCE*torch.randn(y_data.size()))
+
+#y_data = y_data_real#*(1 + PRIDICTION_TOLERANCE*torch.randn(y_data.size()))
 
 
 # ============================ step 2/6 选择模型 ============================
@@ -178,44 +182,6 @@ for i in range(TRAIN_TIMES):
     print("Iteration : ",'%05d'%i, "\tLearningRate : {:.3e}\tLoss: {:.4e}\tRelativeError:{:.5e}".format( optimizer.param_groups[0]['lr'], loss.data.numpy(), LOSS_SQRT ))  
     if LOSS_SQRT < PRIDICTION_TOLERANCE:
         break    # Lower than tollance break here
-
-
-y_data = y_data_real
-for m in net.modules():
-    if isinstance(m, torch.nn.Linear):
-        m.weight.data = m.weight.data/5000
-
-loss_func = torch.nn.MSELoss()
-INITIAL_LOSS = loss_func(0*y_data, y_data)
-LOSS_TOLERANCE = loss_func(0*y_data, PRIDICTION_TOLERANCE*y_data).data.numpy()
-print('LOSS_TOLERANCE',LOSS_TOLERANCE)
-scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.2, threshold=PATIENCE/TRAIN_TIMES*LOSS_TOLERANCE, patience=PATIENCE)
-
-
-# fig = plt.figure()
-# ax = fig.gca(projection='3d')
-# ax.plot_wireframe(xx_2D, yy_2D, zz_2D, color = 'blue',linewidth=1, rstride=10, cstride=10)
-# # The second traning
-
-for i in range(TRAIN_TIMES):
-    # 输入数据进行预测
-    prediction = net(x_data)
-    # 计算预测值与真值误差，注意参数顺序问题
-    # 第一个参数为预测值，第二个为真值
-    loss = loss_func(prediction, y_data)#*100/firstLoss
-    # Change the learning rate
-    #scheduler.step()
-    scheduler.step(loss)
-    # 开始优化步骤
-    # 每次开始优化前将梯度置为0
-    optimizer.zero_grad()
-    # 误差反向传播
-    loss.backward()
-    optimizer.step()
-    # 按照最小loss优化参数
-    # 可视化训练结果
-    LOSS_SQRT = np.sqrt(loss.data.numpy()/INITIAL_LOSS.data.numpy())
-    print("Iteration : ",'%05d'%i, "\tLearningRate : {:.3e}\tLoss: {:.4e}\tRelativeError:{:.5e}".format( optimizer.param_groups[0]['lr'], loss.data.numpy(), LOSS_SQRT ))  
     if LOSS_SQRT < PRIDICTION_TOLERANCE:
         break    # Lower than tollance break here
     if i % 50 == 0:
@@ -225,6 +191,52 @@ for i in range(TRAIN_TIMES):
         plt.savefig(animationPATH+'/'+str('%05d'%i)+'.png', dpi=96)
         # 清空上一次显示结果
         pridSurf.remove()
+
+# y_data = y_data_real
+# for m in net.modules():
+    # if isinstance(m, torch.nn.Linear):
+        # m.weight.data = m.weight.data/5000
+
+# loss_func = torch.nn.MSELoss()
+# INITIAL_LOSS = loss_func(0*y_data, y_data)
+# LOSS_TOLERANCE = loss_func(0*y_data, PRIDICTION_TOLERANCE*y_data).data.numpy()
+# print('LOSS_TOLERANCE',LOSS_TOLERANCE)
+# scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.2, threshold=PATIENCE/TRAIN_TIMES*LOSS_TOLERANCE, patience=PATIENCE)
+
+
+# # fig = plt.figure()
+# # ax = fig.gca(projection='3d')
+# # ax.plot_wireframe(xx_2D, yy_2D, zz_2D, color = 'blue',linewidth=1, rstride=10, cstride=10)
+# # # The second traning
+
+# for i in range(TRAIN_TIMES):
+    # # 输入数据进行预测
+    # prediction = net(x_data)
+    # # 计算预测值与真值误差，注意参数顺序问题
+    # # 第一个参数为预测值，第二个为真值
+    # loss = loss_func(prediction, y_data)#*100/firstLoss
+    # # Change the learning rate
+    # #scheduler.step()
+    # scheduler.step(loss)
+    # # 开始优化步骤
+    # # 每次开始优化前将梯度置为0
+    # optimizer.zero_grad()
+    # # 误差反向传播
+    # loss.backward()
+    # optimizer.step()
+    # # 按照最小loss优化参数
+    # # 可视化训练结果
+    # LOSS_SQRT = np.sqrt(loss.data.numpy()/INITIAL_LOSS.data.numpy())
+    # print("Iteration : ",'%05d'%i, "\tLearningRate : {:.3e}\tLoss: {:.4e}\tRelativeError:{:.5e}".format( optimizer.param_groups[0]['lr'], loss.data.numpy(), LOSS_SQRT ))  
+    # if LOSS_SQRT < PRIDICTION_TOLERANCE:
+        # break    # Lower than tollance break here
+    # if i % 50 == 0:
+        # # 实时预测的曲面
+        # plotPrid = np.reshape(prediction.data.numpy()[:,0],(len(y),len(x)))
+        # pridSurf = ax.plot_wireframe(xx_2D, yy_2D, plotPrid, color = 'red',linewidth=1, rstride=50, cstride=50)
+        # plt.savefig(animationPATH+'/'+str('%05d'%i)+'.png', dpi=96)
+        # # 清空上一次显示结果
+        # pridSurf.remove()
 
 
 # ============================ step 6/6 保存模型 ============================
