@@ -164,6 +164,7 @@ ax.plot_wireframe(xx_2D, yy_2D, zz_2D, color = 'blue',linewidth=1, rstride=10, c
 for i in range(TRAIN_TIMES):
     # 输入数据进行预测
     prediction = net(x_data)
+    prediction_real = prediction*(Max-Min)+Min
     # 计算预测值与真值误差，注意参数顺序问题
     # 第一个参数为预测值，第二个为真值
     loss = loss_func(prediction, y_data)#*100/firstLoss
@@ -186,7 +187,7 @@ for i in range(TRAIN_TIMES):
         break    # Lower than tollance break here
     if i % 50 == 0:
         # 实时预测的曲面
-        plotPrid = np.reshape(prediction.data.numpy()[:,0],(len(y),len(x)))
+        plotPrid = np.reshape(prediction_real.data.numpy()[:,0],(len(y),len(x)))
         pridSurf = ax.plot_wireframe(xx_2D, yy_2D, plotPrid, color = 'red',linewidth=1, rstride=50, cstride=50)
         plt.savefig(animationPATH+'/'+str('%05d'%i)+'.png', dpi=96)
         # 清空上一次显示结果
