@@ -1,40 +1,18 @@
 # !/usr/bin/python
 # coding: utf8
-# @Time    : 2018-08-04 19:09
-# @Author  : Liam
-# @Email   : luyu.real@qq.com
-# @Software: PyCharm
-#                        .::::.
-#                      .::::::::.
-#                     :::::::::::
-#                  ..:::::::::::'
-#               '::::::::::::'
-#                 .::::::::::
-#            '::::::::::::::..
-#                 ..::::::::::::.
-#               ``::::::::::::::::
-#                ::::``:::::::::'        .:::.
-#               ::::'   ':::::'       .::::::::.
-#             .::::'      ::::     .:::::::'::::.
-#            .:::'       :::::  .:::::::::' ':::::.
-#           .::'        :::::.:::::::::'      ':::::.
-#          .::'         ::::::::::::::'         ``::::.
-#      ...:::           ::::::::::::'              ``::.
-#     ```` ':.          ':::::::::'                  ::::..
-#                        '.:::::'                    ':'````..
-#                     美女保佑 永无BUG
+
 import torch
 #from torch import nn, optim
 from torch import nn
 import torch.nn.functional as nnFunction
 
-## 自定义一个Net类，继承于torch.nn.Module类
-## 这个神经网络的设计是只有一层隐含层，隐含层神经元个数可随意指定
+## Define a Net class, inherited from torch.nn.Module
+## This net has only one layer
 class OneLayer(nn.Module):
     """
-    定义了一个简单的两层全连接神经网络，每一层都是线性的
+    Define a simply net class, onlty one layer
     """
-    # Net类的初始化函数
+    # Net ini
     def __init__(self, n_feature, n_hidden, n_output):
         # 继承父类的初始化函数
         super(OneLayer, self).__init__()
